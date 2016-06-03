@@ -72,5 +72,7 @@ def invoke(msg):
                                                  obj_id, name))
         while not hasattr(obj, 'listener'):
             continue
+    if len(obj.listener) == opcode:
+        return
     obj.listener[opcode](obj, obj.user_data, *args)
     return True
