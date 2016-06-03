@@ -1,4 +1,4 @@
-objects = {0: None}
+objects = {0: None} # list of object instances.
 
 class Protocol:
     def __init__(self, name):

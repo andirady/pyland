@@ -137,7 +137,7 @@ class MyThread(Thread):
         while self.more:
             while self.pause:
                 continue
-            self.more = pyland.invoke(pyland.read_msg(d.connection))
+            self.more = pyland.invoke_message(d.connection)
 
 mythread=MyThread()
 mythread.start()
