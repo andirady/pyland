@@ -1,9 +1,13 @@
+import sys
+
 from struct import pack, unpack
 from .types import WLObject, objects
 
 LITTLE_UINT = "<I"
-WORD_SIZE = 4 # in bytes
+WORD_SIZE = 4  # in bytes
 HEADER_SIZE = 2 * WORD_SIZE
+
+prev_msg = []
 
 
 def wl_fmt(*vals) -> bytes:
@@ -23,11 +27,10 @@ def wl_fmt(*vals) -> bytes:
         elif val_type is str:
             val += '\0'
             s = pack(LITTLE_UINT, len(val)) + val.encode("utf8")
+            ret += s
             mod = len(s) % WORD_SIZE
             if mod != 0:
-                ret += s + bytearray(WORD_SIZE - mod)
-            else:
-                ret += s
+                ret += bytearray(WORD_SIZE - mod)
         elif isinstance(val, WLObject):
             ret += pack(LITTLE_UINT, val.id)
         else:
@@ -61,6 +64,19 @@ def read_msg(con):
     return unpack('<IH', raw1) + (con.recv(msg_len - 8),)
 
 
+def get_type_names(type_codes):
+    names = []
+    for code in type_codes:
+        names.append({
+            'i': 'int',
+            'u': 'uint',
+            'f': 'fixed',
+            's': 'string',
+            'o': 'object'
+        }.get(code))
+    return ', '.join(names)
+
+
 def invoke(msg: tuple) -> False:
     """
     """
@@ -68,33 +84,37 @@ def invoke(msg: tuple) -> False:
         return False
     obj_id, opcode, raw_args = msg
     obj = objects[obj_id]
-    name, arg_ts = obj.events[opcode]
+    name, type_codes = obj.events[opcode]
     args = []
     i = 0
-    for t in arg_ts:
-        if t in 'iu': # int or unsinged int
+
+    def incr():
+        nonlocal i
+        i += WORD_SIZE
+        return i
+
+    for t in type_codes:
+        if t in 'iu':  # int or unsigned int
             fmt = '<i' if t == 'i' else '<I'
-            args.append(unpack(fmt, raw_args[i:i+WORD_SIZE])[0])
-            i += WORD_SIZE
-        elif t == 's': # string
-            n = unpack(LITTLE_UINT, raw_args[i:i+WORD_SIZE])[0]
-            i += WORD_SIZE
-            args.append(raw_args[i:i+n-1].decode('utf8'))
-            i += n
-            mod = n % WORD_SIZE
+            args.append(unpack(fmt, raw_args[i:incr()])[0])
+        elif t == 's':  # string
+            strlen = unpack(LITTLE_UINT, raw_args[i:incr()])[0]
+            args.append(raw_args[i:i + strlen - 1].decode('utf8'))
+            i += strlen
+            mod = strlen % WORD_SIZE
             if mod % WORD_SIZE != 0:
                 i += WORD_SIZE - mod
-        elif t == 'o': # object
-            o_id = unpack(LITTLE_UINT, raw_args[i:i+WORD_SIZE])[0]
-            i += WORD_SIZE
-            args.append(objects[o_id])
+        elif t == 'o':  # object
+            object_id = unpack(LITTLE_UINT, raw_args[i:incr()])[0]
+            args.append(objects[object_id])
     if not hasattr(obj, 'listener'):
         print("waiting listener for %s@%d.%s" % (type(obj).__name__,
                                                  obj_id, name))
         while not hasattr(obj, 'listener'):
             continue
     if len(obj.listener) == opcode:
-        return False
+        raise Exception("Missing {}({}) listener for object {{ID={} {}}}" \
+                        .format(name, get_type_names(type_codes), obj_id, objects[obj_id]))
     obj.listener[opcode](obj, obj.user_data, *args)
     return True
 
