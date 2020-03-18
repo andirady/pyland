@@ -16,10 +16,10 @@ d.outputs = []
 d.connection = pyland.connect_to_display()
 
 def error(self, data, *args):
-    print("error! " + str(args))
+    print(f"error! {args}")
 
 def delete_id(self, data, id):
-    print("delete_id! id=%d" % id)
+    print(f"delete_id! id={id}")
     obj = pyland.objects.pop(id)
     del obj
 
@@ -28,29 +28,28 @@ d.add_listener((error, delete_id), d)
 reg = d.get_registry()
 
 def seat_capabilities_ev(seat, inp, capabilities):
-    print('capabilities@%d! capabilities=%d' % (seat.id, capabilities))
+    print(f"capabilities@{seat.id}! capabilities={capabilities}")
 
 def seat_name_ev(seat, inp, name):
-    print('name@%d! name=%s' % (seat.id, name))
+    print(f"name@{seat.id}! name={name}")
 
 def dd_data_offer_event(dd, inp, id):
-    print('data offer! %d' % id)
+    print(f"data offer! {id}")
 
 def dd_enter_event(dd, inp, serial, surface, x, y, id):
-    print('enter@%d! serial=%d surface=%s x=%s y=%s, id=%s'
-          % (dd.id, serial, surface, x,y, id))
+    print(f"enter@{dd.id}! serial={serial} surface={surface} x={x} y={y}, id={id}")
 
 def dd_leave_event(dd, inp):
-    print('leave@%d!' % dd.id)
+    print(f"leave@{dd.id}!")
 
 def dd_motion_event(dd, inp, time, x, y):
-    print('motion@%d! time=%d x=%s y=%s' % (dd.id, time, x,y))
+    print(f"motion@{dd.id}! time={time} x={x} y={y}")
 
 def dd_drop_event(dd, inp):
-    print('drop@%d!' % dd.id)
+    print(f"drop@{dd.id}!")
 
 def dd_selection_event(dd, inp, id):
-    print('selection@%d! id=%s' % (dd.id, id)) 
+    print(f"selection@{dd.id}! id={id}")
 
 def add_input(d, id):
     inp = type('Input', (), {
@@ -73,16 +72,16 @@ def add_input(d, id):
                                       dd_selection_event), inp)
 
 def display_handle_geometry(op, o, *args):
-    print('handle_geometry! %s' % str(args))
+    print(f"handle_geometry! {args}")
 
 def display_handle_mode(op, o, *args):
-    print('handle_mode! %s' % str(args))
+    print(f"handle_mode! {args}")
 
 def display_handle_done(op, o, *args):
-    print('handle_done! %s' % str(args))
+    print(f"handle_done! {args}")
 
 def display_handle_scale(op, o, *args):
-    print('handle_scale! %s' % str(args))
+    print(f"handle_scale! {args}")
 
 def add_output(d, id):
     output = reg.bind(id, wlproto.wl_output, 2)
@@ -98,7 +97,7 @@ def shm_listener(shm, data, fmt):
         data.has_rgb565 = True
 
 def global_handler(reg, d, name, interface, version):
-    print('global! (name=%d, interface="%s", version=%d)' % (name, interface, version))
+    print(f"global! (name={name}, interface=\"{interface}\", version={version})")
     if interface == 'wl_compositor':
         d.compositor = reg.bind(name, wlproto.wl_compositor, 3)
     elif interface == 'wl_output':
@@ -119,12 +118,12 @@ def global_handler(reg, d, name, interface, version):
         print("\t^-- UNHANDLED")
 
 def global_remove(self, data, name):
-    print('global! name=%d' % name)
+    print(f"global! name={name}")
 
 reg.add_listener((global_handler, global_remove), d)
 
 def done(self, data, callback_data):
-    print('done! %s' % callback_data)
+    print(f"done! {callback_data}")
     self.isdone = True
 
 class MyThread(Thread):
@@ -173,7 +172,7 @@ def handle_ping(ss, d, serial):
     print('Pinged and ponged')
 
 def enter_event(ss, d, output):
-    print('enter! output=%s' % output)
+    print(f"enter! output={output}")
     seat = d.inputs[0].seat
     pointer = seat.get_pointer()
     pointer.mouse_down = False
@@ -182,7 +181,7 @@ def enter_event(ss, d, output):
     keyboard.add_listener(keyboard_listener, seat)
 
 def leave_event(ss, d, output):
-    print('leave! output=%s' % output)
+    print(f"leave! output={output}")
 
 def resize(width, height):
     window.width, window.height = width, height
@@ -216,30 +215,30 @@ def clear():
     d.surface.commit()
 
 def pointer_enter(ptr, d, *args):
-    print('pointer_enter! %s' % str(args))
+    print(f"pointer_enter! {args}")
 
 def pointer_leave(ptr, d, *args):
-    print('pointer_leave! %s' % str(args))
+    print(f"pointer_leave! {args}")
     ptr.mouse_down = False
 
 def pointer_motion(ptr, seat, *args):
-    print('pointer_motion! %s' % str(args))
+    print(f"pointer_motion! {args}")
     
 def pointer_button(ptr, seat, serial, time, button, state):
     global mythread
-    print('pointer_button! %s' % str((serial, time, button, state)))
+    print(f"pointer_button! {(serial, time, button, state)}")
     if button == 272 and state == 1:
         pass
 
 def pointer_axis(ptr, d, *args):
-    print('pointer_axis! %s' % str(args))
+    print(f"pointer_axis! {args}")
 
 pointer_listener = (pointer_enter, pointer_leave, pointer_motion,
                     pointer_button, pointer_axis)
 
 def dummylistener(eventname):
     def f(obj, data, *args):
-        print('%s@%d! %s' % (eventname, obj.id, str(args)))
+        print(f"{eventname}@{obj.id}! {args}")
     return f
 
 keyboard_listener = (dummylistener('kb_keymap'),

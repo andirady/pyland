@@ -34,7 +34,7 @@ def wl_fmt(*vals) -> bytes:
         elif isinstance(val, WLObject):
             ret += pack(LITTLE_UINT, val.id)
         else:
-            raise Exception('Unsupported type %s' % val_type)
+            raise Exception(f"Unsupported type {val_type}")
     return ret
 
 
@@ -77,7 +77,7 @@ def get_type_names(type_codes):
     return ', '.join(names)
 
 
-def invoke(msg: tuple) -> False:
+def invoke(msg: tuple) -> bool:
     """
     """
     if msg == None:
@@ -108,13 +108,11 @@ def invoke(msg: tuple) -> False:
             object_id = unpack(LITTLE_UINT, raw_args[i:incr()])[0]
             args.append(objects[object_id])
     if not hasattr(obj, 'listener'):
-        print("waiting listener for %s@%d.%s" % (type(obj).__name__,
-                                                 obj_id, name))
+        print(f"waiting listener for {type(obj).__name__}@{obj_id}.{name}")
         while not hasattr(obj, 'listener'):
             continue
     if len(obj.listener) == opcode:
-        raise Exception("Missing {}({}) listener for object {{ID={} {}}}" \
-                        .format(name, get_type_names(type_codes), obj_id, objects[obj_id]))
+        raise Exception(f"Missing {name}({get_type_names(type_codes)}) listener for object {{ID={obj_id} {objects.get(obj_id)}}}")
     obj.listener[opcode](obj, obj.user_data, *args)
     return True
 
